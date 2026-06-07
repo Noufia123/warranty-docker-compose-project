@@ -1,0 +1,67 @@
+services:
+
+  # =========================
+  # BACKEND (Spring Boot)
+  # =========================
+  backend:
+    build:
+      context: ./wpoms_admin
+    container_name: wpoms-backend
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/warrantydb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  # =========================
+  # FRONTEND (Vite + React)
+  # =========================
+  frontend:
+    build:
+      context: ./wpoms_web
+    container_name: wpoms-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://backend:8081
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # =========================
+  # DATABASE (PostgreSQL)
+  # =========================
+  db:
+    image: postgres:15
+    container_name: wpoms-db-new
+    restart: always
+    environment:
+      POSTGRES_DB: warrantydb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+# =========================
+# NETWORKS
+# =========================
+networks:
+  app-network:
+    driver: bridge
+
+# =========================
+# VOLUMES
+# =========================
+volumes:
+  pgdata:

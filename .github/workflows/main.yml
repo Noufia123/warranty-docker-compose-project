@@ -28,11 +28,11 @@ jobs:
 
     - name: Build Frontend Image
       run: |
-        docker build -t frontend-image ./frontend
+        docker build -t frontend-image ./wpoms_web
 
     - name: Build Backend Image
       run: |
-        docker build -t backend-image ./backend
+        docker build -t backend-image ./wpoms_admin
 
     - name: Tag Frontend Image
       run: |

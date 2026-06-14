@@ -1,8 +1,6 @@
 services:
 
-  # =========================
-  # BACKEND (Spring Boot)
-  # =========================
+  
   backend:
     build:
       context: ./wpoms_admin
@@ -19,9 +17,7 @@ services:
     networks:
       - app-network
 
-  # =========================
-  # FRONTEND (Vite + React)
-  # =========================
+  
   frontend:
     build:
       context: ./wpoms_web
@@ -35,9 +31,7 @@ services:
     networks:
       - app-network
 
-  # =========================
-  # DATABASE (PostgreSQL)
-  # =========================
+  
   db:
     image: postgres:15
     container_name: wpoms-db-new
@@ -53,9 +47,6 @@ services:
     networks:
       - app-network
 
-# =========================
-# NETWORKS
-# =========================
 networks:
   app-network:
     driver: bridge

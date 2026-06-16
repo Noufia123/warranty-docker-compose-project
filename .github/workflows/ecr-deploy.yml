@@ -15,18 +15,13 @@ jobs:
 
 build-and-push:
 
-```
+
 runs-on: ubuntu-latest
 
 steps:
 
   - name: Checkout Code
     uses: actions/checkout@v4
-
-  - name: Show Repository Structure
-    run: |
-      pwd
-      ls -R
 
   - name: Configure AWS Credentials
     uses: aws-actions/configure-aws-credentials@v4
@@ -39,12 +34,10 @@ steps:
     uses: aws-actions/amazon-ecr-login@v2
 
   - name: Build Frontend Image
-    run: |
-      docker build -t frontend-image ./wpoms_web
+    run: docker build -t frontend-image ./wpoms_web
 
   - name: Build Backend Image
-    run: |
-      docker build -t backend-image ./wpoms_admin
+    run: docker build -t backend-image ./wpoms_admin
 
   - name: Tag Frontend Image
     run: |
@@ -65,11 +58,11 @@ steps:
     run: |
       docker push \
       $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
-```
+
 
 deploy:
 
-```
+
 needs: build-and-push
 
 runs-on: ubuntu-latest
@@ -87,11 +80,11 @@ steps:
       script: |
         export IMAGE_TAG=${{ github.sha }}
 
-        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
         cd ~/app
 
         docker compose pull
 
         docker compose up -d
-```
+

@@ -1,90 +1,82 @@
 name: Build and Push Docker Images
 
 on:
-push:
-branches:
-- main
+  push:
+    branches:
+      - main
 
 env:
-AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-AWS_REGION: ap-south-1
-FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
-BACKEND_REPO: ${{ vars.BACKEND_REPO }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: ap-south-1
+  FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
+  BACKEND_REPO: ${{ vars.BACKEND_REPO }}
 
 jobs:
 
-build-and-push:
+  build-and-push:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-runs-on: ubuntu-latest
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-steps:
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-  - name: Checkout Code
-    uses: actions/checkout@v4
+      - name: Build Frontend Image
+        run: docker build -t frontend-image ./wpoms_web
 
-  - name: Configure AWS Credentials
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: ${{ env.AWS_REGION }}
+      - name: Build Backend Image
+        run: docker build -t backend-image ./wpoms_admin
 
-  - name: Login to Amazon ECR
-    uses: aws-actions/amazon-ecr-login@v2
+      - name: Tag Frontend Image
+        run: |
+          docker tag frontend-image:latest \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
 
-  - name: Build Frontend Image
-    run: docker build -t frontend-image ./wpoms_web
+      - name: Tag Backend Image
+        run: |
+          docker tag backend-image:latest \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
 
-  - name: Build Backend Image
-    run: docker build -t backend-image ./wpoms_admin
+      - name: Push Frontend Image
+        run: |
+          docker push \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
 
-  - name: Tag Frontend Image
-    run: |
-      docker tag frontend-image:latest \
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
+      - name: Push Backend Image
+        run: |
+          docker push \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
 
-  - name: Tag Backend Image
-    run: |
-      docker tag backend-image:latest \
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
+  deploy:
+    needs: build-and-push
 
-  - name: Push Frontend Image
-    run: |
-      docker push \
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
+    runs-on: ubuntu-latest
 
-  - name: Push Backend Image
-    run: |
-      docker push \
-      $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
 
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
 
-deploy:
+          script: |
+            export IMAGE_TAG=${{ github.sha }}
 
+            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
 
-needs: build-and-push
+            cd ~/app
 
-runs-on: ubuntu-latest
+            docker compose pull
 
-steps:
-
-  - name: Deploy to EC2
-    uses: appleboy/ssh-action@v1.0.3
-
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ubuntu
-      key: ${{ secrets.EC2_SSH_KEY }}
-
-      script: |
-        export IMAGE_TAG=${{ github.sha }}
-
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-        cd ~/app
-
-        docker compose pull
-
-        docker compose up -d
-
+            docker compose up -d

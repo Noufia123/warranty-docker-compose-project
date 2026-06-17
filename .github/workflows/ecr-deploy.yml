@@ -30,27 +30,27 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ✅ BUILD + TAG FRONTEND (DIRECT TO ECR STYLE)
+      
       - name: Build Frontend Image
         run: |
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }} \
             ./wpoms_web
 
-      # ✅ BUILD + TAG BACKEND
+      
       - name: Build Backend Image
         run: |
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }} \
             ./wpoms_admin
 
-      # ✅ PUSH FRONTEND
+      
       - name: Push Frontend Image
         run: |
           docker push \
             $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
 
-      # ✅ PUSH BACKEND
+      
       - name: Push Backend Image
         run: |
           docker push \

@@ -30,7 +30,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      
+      # ---------------- FRONTEND ----------------
       - name: Build Frontend Image
         run: |
           docker build \
@@ -38,7 +38,7 @@ jobs:
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest \
             ./wpoms_web
 
-      
+      # ---------------- BACKEND ----------------
       - name: Build Backend Image
         run: |
           docker build \
@@ -46,7 +46,7 @@ jobs:
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:latest \
             ./wpoms_admin
 
-      
+      # ---------------- PUSH FRONTEND ----------------
       - name: Push Frontend Image
         run: |
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest
@@ -59,24 +59,24 @@ jobs:
           docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
 
   deploy:
-  needs: build-and-push
-  runs-on: ubuntu-latest
+    needs: build-and-push
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@v1.0.3
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
 
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
 
-        script: |
-          aws ecr get-login-password --region ap-south-1 \
-          | docker login --username AWS --password-stdin \
-          924982554051.dkr.ecr.ap-south-1.amazonaws.com
+          script: |
+            aws ecr get-login-password --region ap-south-1 \
+            | docker login --username AWS --password-stdin \
+            $AWS_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
 
-          cd ~/app
+            cd ~/app
 
-          docker compose pull
-          docker compose up -d --remove-orphans
+            docker compose pull
+            docker compose up -d --remove-orphans

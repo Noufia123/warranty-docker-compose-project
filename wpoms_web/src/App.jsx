@@ -6,6 +6,11 @@ import AppRoutes from './routes/index';
 function App() {
   return (
     <Router>
+       <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>
+         CI/CD Pipeline Active - Latest Deployment Success
+      </div>
+
+
       <Toaster position="bottom-right" richColors />
       <AppRoutes />
     </Router>

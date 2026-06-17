@@ -18,7 +18,7 @@ services:
     image: 924982554051.dkr.ecr.ap-south-1.amazonaws.com/frontend-repo:latest
     container_name: wpoms-frontend
     ports:
-      - "5173:5173"
+      - "80:80"
     environment:
       VITE_API_BASE_URL: http://backend:8081
     depends_on:

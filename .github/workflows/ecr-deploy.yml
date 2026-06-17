@@ -35,6 +35,7 @@ jobs:
         run: |
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }} \
+            -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest \
             ./wpoms_web
 
       
@@ -42,44 +43,40 @@ jobs:
         run: |
           docker build \
             -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }} \
+            -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:latest \
             ./wpoms_admin
 
       
       - name: Push Frontend Image
         run: |
-          docker push \
-            $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:${{ github.sha }}
 
-      
+      # ---------------- PUSH BACKEND ----------------
       - name: Push Backend Image
         run: |
-          docker push \
-            $AWS_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:latest
+          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:${{ github.sha }}
 
   deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
+  needs: build-and-push
+  runs-on: ubuntu-latest
 
-    env:
-      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-      AWS_REGION: ap-south-1
+  steps:
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.3
 
-    steps:
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
 
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          aws ecr get-login-password --region ap-south-1 \
+          | docker login --username AWS --password-stdin \
+          924982554051.dkr.ecr.ap-south-1.amazonaws.com
 
-          script: |
-            export IMAGE_TAG=${{ github.sha }}
+          cd ~/app
 
-            aws ecr get-login-password --region ap-south-1 \
-            | docker login --username AWS --password-stdin \
-            $AWS_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
-
-            cd ~/app
-
-            docker compose up -d --remove-orphans
+          docker compose pull
+          docker compose up -d --remove-orphans

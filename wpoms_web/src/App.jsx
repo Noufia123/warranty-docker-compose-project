@@ -7,7 +7,7 @@ function App() {
   return (
     <Router>
        <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>
-         CI/CD Pipeline Active - Latest Deployment Successful
+         CI/CD Pipeline Auto Deployment Working
       </div>
 
 

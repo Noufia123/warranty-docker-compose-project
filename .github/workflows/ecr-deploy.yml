@@ -61,6 +61,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+
+
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3

@@ -16,7 +16,7 @@ docker compose down
 
 **4.How the Pipeline Works**
 
-    Whenever code is pushed to the main branch, GitHub Actions automatically starts the CI/CD pipeline.
+Whenever code is pushed to the main branch,Github Actions automatically start the CI/CD pipeline
 
 1. The workflow checks out the source code.
 2. AWS credentials are configured.
@@ -27,18 +27,27 @@ docker compose down
 7. Docker Compose pulls the latest images.
 8. Containers are restarted and the application becomes live.
 
-**5.How to Debug a Failed Pipeline**
+**5. How to Debug a Failed Pipeline**
 
-Open GitHub → Actions.
-Select the failed workflow run.
-Check the failed job logs.
-Verify AWS credentials and GitHub Secrets.
-Confirm Docker images were pushed to ECR.
-Verify EC2 connectivity using SSH.
-**Check EC2 logs:**
+If the pipeline fails:
+
+1. Open **GitHub → Actions**.
+2. Select the failed workflow run.
+3. Open the failed job and review the logs.
+4. Verify AWS credentials and GitHub Secrets are configured correctly.
+5. Confirm Docker images were successfully pushed to Amazon ECR.
+6. Verify EC2 connectivity using SSH.
+7. Check the running containers on EC2:
+
+
 docker ps -a
+**Check application logs:**
 docker compose logs
+**Verify container status:**
 docker compose ps
+**manually pull the latest images and restart the application:**
+docker compose pull
+docker compose up -d
 
 **Verify ECR images:**
 aws ecr list-images --repository-name frontend-repo

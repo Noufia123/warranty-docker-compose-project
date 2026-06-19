@@ -3,37 +3,6 @@
  This project is a containerized Warranty Product Order Management System deployed on AWS using DevOps practices. The application consists of a frontend, backend, and PostgreSQL database, with infrastructure provisioned using Terraform and deployments automated through GitHub Actions.
 
 
-**2.Architecture Diagram**
-
-
-Developer Pushes Code
-          ↓
-GitHub Actions Triggered
-          ↓ 
-Checkout Repository 
-          ↓ 
-Configure AWS Credentials
-          ↓ 
-Login to ECR 
-          ↓
-Build Frontend Image 
-          ↓ 
-Build Backend Image 
-          ↓ 
-Tag Images with Commit SHA
-          ↓
- Push Images to Amazon ECR
-          ↓
-SSH Into EC2
-          ↓ 
-Login to ECR From EC2 
-          ↓
-Pull Latest Images 
-          ↓ 
-Docker Compose Up
-          ↓
-Updated Application Becomes Live
-
 **3.How to Run Locally**
 
 **Start Application**
@@ -47,7 +16,16 @@ docker compose down
 
 **4.How the Pipeline Works**
 
-    Whenever code is pushed to the main branch, GitHub Actions automatically starts the pipeline. The workflow builds Docker images for both frontend and backend applications, tags them using the Git commit SHA, and pushes them to Amazon ECR. After the images are successfully uploaded, a deployment job connects to the EC2 server using SSH, pulls the latest images from ECR, and restarts the application using Docker Compose. This ensures that the latest code changes are automatically deployed without any manual intervention.
+    Whenever code is pushed to the main branch, GitHub Actions automatically starts the CI/CD pipeline.
+
+1. The workflow checks out the source code.
+2. AWS credentials are configured.
+3. Docker images for frontend and backend are built.
+4. Images are tagged using the Git commit SHA.
+5. Images are pushed to Amazon ECR.
+6. The deploy job connects to EC2 using SSH.
+7. Docker Compose pulls the latest images.
+8. Containers are restarted and the application becomes live.
 
 **5.How to Debug a Failed Pipeline**
 
